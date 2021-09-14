@@ -10,3 +10,6 @@ class BotController:
 
     def queue(self):
         print('queue')
+
+    def jump(self):
+        print('jump')

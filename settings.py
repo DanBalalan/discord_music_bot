@@ -3,7 +3,7 @@ from bot_controller import BotController
 
 SPLIT_CHAR = ' '
 
-# {<Recognizable_command>: (<BaseRestreamer_method_name>, <arg_types>), ...}
+# {<Recognizable_command>: (<BaseRestreamer_method_name>, (<arg1_type>, <arg2_type>)), ...}
 COMMANDS_MAP = {
     '-p':       (BaseRestreamer.play.__name__, (str,)),
     '-play':    (BaseRestreamer.play.__name__, (str,)),
@@ -15,5 +15,6 @@ COMMANDS_MAP = {
     '-exit':    (BotController.exit.__name__, (None,)),
     '-q':       (BotController.queue.__name__, (None,)),
     '-queue':   (BotController.queue.__name__, (None,)),
-    # TODO
+    '-j':       (BotController.jump.__name__, (int,)),
+    '-jump':    (BotController.jump.__name__, (int,)),
 }
