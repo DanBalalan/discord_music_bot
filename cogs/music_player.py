@@ -1,8 +1,12 @@
+from importlib import import_module
+
 from discord.ext import commands
+from discord import FFmpegPCMAudio
 from converters import SourceDetector
 
 
 class MusicPlayer(commands.Cog):
+    voice_client = None
 
     def __init__(self, bot):
         self.bot = bot
@@ -11,12 +15,20 @@ class MusicPlayer(commands.Cog):
     @commands.command(name='play', aliases=('p',))
     async def play(self, ctx, *, arg: SourceDetector):
         source, link = arg
+
         if not self._playlist.get(ctx.guild.id):
             self._playlist[ctx.guild.id] = [link]
         else:
             self._playlist[ctx.guild.id].append(link)
 
-        await ctx.send(f'{type(self).__name__} source: {source}, link: {link}')
+        if not ctx.author.voice:
+            await ctx.send(f'You\'re not in a voice channel')
+        else:
+            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
+            self.voice_client = await ctx.author.voice.channel.connect(timeout=10)
+            play_config, title = import_module(f'cogs.music_sources.{source}').get_config(link)
+            self.voice_client.play(FFmpegPCMAudio(**play_config))
+            await ctx.send(f'Now playing {title}')
 
     @commands.command(name='stop', aliases=('s',))
     async def stop(self, ctx):
