@@ -1,7 +1,7 @@
 from importlib import import_module
 
 from discord.ext import commands
-from discord import FFmpegPCMAudio
+from discord import FFmpegPCMAudio, PCMVolumeTransformer
 from converters import SourceDetector
 
 
@@ -24,15 +24,16 @@ class MusicPlayer(commands.Cog):
         if not ctx.author.voice:
             await ctx.send(f'You\'re not in a voice channel')
         else:
-            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
-            self.voice_client = await ctx.author.voice.channel.connect(timeout=10)
-            play_config, title = import_module(f'cogs.music_sources.{source}').get_config(link)
-            self.voice_client.play(FFmpegPCMAudio(**play_config))
-            await ctx.send(f'Now playing {title}')
+            if not self.voice_client or not self.voice_client.is_playing():
+                await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
+                self.voice_client = await ctx.author.voice.channel.connect(timeout=10)
+                play_config, title = import_module(f'cogs.music_sources.{source}').get_config(self._playlist[ctx.guild.id][0])
+                await ctx.send(f'Now playing {title}')
+                self.voice_client.play(FFmpegPCMAudio(**play_config))
 
     @commands.command(name='stop', aliases=('s',))
     async def stop(self, ctx):
-        print('BasePlayer.stop')
+        self.voice_client.stop()
 
     @commands.command(name='next', aliases=('n',))
     async def next(self, ctx):
@@ -44,7 +45,7 @@ class MusicPlayer(commands.Cog):
 
     @commands.command(name='queue', aliases=('q',))
     async def queue(self, ctx):
-        print('BasePlayer.queue')
+        await ctx.send(f'Queue:\n{self._playlist[ctx.guild.id]}')
 
     @commands.command(name='jump', aliases=('j',))
     async def jump(self, ctx):
