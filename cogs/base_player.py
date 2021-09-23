@@ -14,23 +14,23 @@ class BasePlayer(commands.Cog):
         pass
 
     @commands.command(name='stop', aliases=('s',))
-    async def stop(self):
+    async def stop(self, ctx):
         print('BasePlayer.stop')
 
     @commands.command(name='next', aliases=('n',))
-    async def next(self):
+    async def next(self, ctx):
         print('BasePlayer.next')
 
     @commands.command(name='exit', aliases=('e',))
-    async def exit(self):
+    async def exit(self, ctx):
         print('BasePlayer.exit')
 
     @commands.command(name='queue', aliases=('q',))
-    async def queue(self):
+    async def queue(self, ctx):
         print('BasePlayer.queue')
 
     @commands.command(name='jump', aliases=('j',))
-    async def jump(self):
+    async def jump(self, ctx):
         print('BasePlayer.jump')
 
     @property
