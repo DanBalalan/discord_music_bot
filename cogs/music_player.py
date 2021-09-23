@@ -1,17 +1,22 @@
 from discord.ext import commands
-from abc import abstractmethod
+from converters import SourceDetector
 
 
-class BasePlayer(commands.Cog):
+class MusicPlayer(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        setattr(self, self._playlist_attr_name, dict())  # {<guild_id>: <playlist>}
+        setattr(self, self._playlist_attr_name, dict())  # {<guild_id>: [<song0_link>, <song1_link>]}
 
-    @abstractmethod
-    async def play(self, ctx, *, args):
-        # TODO:
-        pass
+    @commands.command(name='play', aliases=('p',))
+    async def play(self, ctx, *, arg: SourceDetector):
+        source, link = arg
+        if not self._playlist.get(ctx.guild.id):
+            self._playlist[ctx.guild.id] = [link]
+        else:
+            self._playlist[ctx.guild.id].append(link)
+
+        await ctx.send(f'{type(self).__name__} source: {source}, link: {link}')
 
     @commands.command(name='stop', aliases=('s',))
     async def stop(self, ctx):

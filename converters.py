@@ -1,10 +1,18 @@
 from discord.ext import commands
+from settings import sources_detector
 
 
-class GuildLinkSplitter(commands.Converter):
+# Default source for search-and-play
+DEFAULT_SOURCE = 'youtube'
+
+
+class SourceDetector(commands.Converter):
     async def convert(self, ctx, argument):
         if argument.startswith('http'):
-            pass
+            for source in sources_detector:
+                print(source, argument)
+                if source in argument:
+                    return sources_detector[source], argument
+            return None, argument
         else:
-            pass
-        return ctx.guild.id, argument  # сервер, ссылка
+            return DEFAULT_SOURCE, argument
