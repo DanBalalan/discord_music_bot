@@ -15,4 +15,4 @@ def get_config(link_or_name):
             info['title']
         )
     else:
-        pass
+        pass  # TODO поиск

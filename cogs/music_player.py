@@ -1,5 +1,6 @@
 from importlib import import_module
 
+from asyncio import sleep as as_sleep
 from discord.ext import commands
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
 from converters import SourceDetector
@@ -10,26 +11,51 @@ class MusicPlayer(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        setattr(self, self._playlist_attr_name, dict())  # {<guild_id>: [<song0_link>, <song1_link>]}
+        self._playlists = {}  # {<guild_id>: [(<play_config>, <title>)]}
+        self.__sources = {}
 
     @commands.command(name='play', aliases=('p',))
     async def play(self, ctx, *, arg: SourceDetector):
         source, link = arg
 
-        if not self._playlist.get(ctx.guild.id):
-            self._playlist[ctx.guild.id] = [link]
-        else:
-            self._playlist[ctx.guild.id].append(link)
+        if not self.__sources.get(source):
+            self.__sources[source] = import_module(f'cogs.music_sources.{source}')
 
         if not ctx.author.voice:
             await ctx.send(f'You\'re not in a voice channel')
         else:
-            if not self.voice_client or not self.voice_client.is_playing():
-                await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
-                self.voice_client = await ctx.author.voice.channel.connect(timeout=10)
-                play_config, title = import_module(f'cogs.music_sources.{source}').get_config(self._playlist[ctx.guild.id][0])
-                await ctx.send(f'Now playing {title}')
-                self.voice_client.play(FFmpegPCMAudio(**play_config))
+            vc = self.__get_vc(ctx)
+
+            playlist = self._playlists.setdefault(ctx.guild.guild_id, [])
+            play_config, title = self.__sources[source].get_config(link)
+
+            if title in (p[1] for p in playlist):
+                await ctx.send(f'This song is already in queue')  # Могут быть коллизии
+            else:
+                playlist.append((play_config, title))
+                await ctx.send(f'Added to queue: {title}')  # TODO: Красивую плашку
+
+                await self.__play_loop(vc)
+            # vc.play(FFmpegPCMAudio(**play_config))
+
+    async def __get_vc(self, ctx):
+        if not ctx.voice_client:
+            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
+            vc = await ctx.author.voice.channel.connect(timeout=10)
+        else:
+            vc = ctx.voice_client
+
+        return vc
+
+    def __get_source(self):
+
+    async def __play_loop(self, vc):  # TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # session_id
+        while True:
+            if not vc.is_playing():
+                pass
+            else:
+                await as_sleep(1)
 
     @commands.command(name='stop', aliases=('s',))
     async def stop(self, ctx):
@@ -45,16 +71,8 @@ class MusicPlayer(commands.Cog):
 
     @commands.command(name='queue', aliases=('q',))
     async def queue(self, ctx):
-        await ctx.send(f'Queue:\n{self._playlist[ctx.guild.id]}')
+        await ctx.send(f'Queue:\n{self._playlists[ctx.guild.id]}')
 
     @commands.command(name='jump', aliases=('j',))
     async def jump(self, ctx):
         print('BasePlayer.jump')
-
-    @property
-    def _playlist_attr_name(self):
-        return f'_{type(self).__name__.lower()}_playlist'
-
-    @property
-    def _playlist(self):
-        return getattr(self, self._playlist_attr_name)
