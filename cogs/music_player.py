@@ -47,7 +47,8 @@ class MusicPlayer(commands.Cog):
 
         return vc
 
-    def __get_source(self):
+    def __get_source(self):  # TODO
+        pass
 
     async def __play_loop(self, vc):  # TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # session_id
