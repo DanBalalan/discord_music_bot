@@ -1,8 +1,10 @@
+from collections import OrderedDict
 from importlib import import_module
 
 from asyncio import sleep as as_sleep
 from discord.ext import commands
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
+
 from converters import SourceDetector
 
 
@@ -11,7 +13,7 @@ class MusicPlayer(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self._playlists = {}  # {<guild_id>: [(<play_config>, <title>)]}
+        self._playlists = {}  # {<guild_id>: OrderedDict{<id>: <play_config>}}
         self.__sources = {}
 
     @commands.command(name='play', aliases=('p',))
@@ -24,19 +26,21 @@ class MusicPlayer(commands.Cog):
         if not ctx.author.voice:
             await ctx.send(f'You\'re not in a voice channel')
         else:
-            vc = self.__get_vc(ctx)
-
-            playlist = self._playlists.setdefault(ctx.guild.guild_id, [])
-            play_config, title = self.__sources[source].get_config(link)
-
-            if title in (p[1] for p in playlist):
-                await ctx.send(f'This song is already in queue')  # Могут быть коллизии
+            playlist = self._playlists.setdefault(ctx.guild.id, OrderedDict())
+            
+            play_config, valid = self.__sources[source].get_config(link)
+            if not valid:
+                await ctx.send(play_config)
+            
             else:
-                playlist.append((play_config, title))
-                await ctx.send(f'Added to queue: {title}')  # TODO: Красивую плашку
+                if play_config.id in playlist:
+                    await ctx.send(f'Track `{play_config.title}` is already in queue')
+                else:
+                    playlist[play_config.id] = play_config
+                    await ctx.send(f'Added to queue: `{play_config.title}`')  # TODO: Красивую плашку
 
-                await self.__play_loop(vc)
-            # vc.play(FFmpegPCMAudio(**play_config))
+                vc = await self.__get_vc(ctx)
+                await self.__play_loop(ctx, vc, playlist)
 
     async def __get_vc(self, ctx):
         if not ctx.voice_client:
@@ -47,20 +51,18 @@ class MusicPlayer(commands.Cog):
 
         return vc
 
-    def __get_source(self):  # TODO
-        pass
-
-    async def __play_loop(self, vc):  # TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # session_id
+    async def __play_loop(self, ctx, vc, playlist):  # TODO
         while True:
-            if not vc.is_playing():
-                pass
+            if not vc.is_playing() and playlist:
+                _, play_config = playlist.popitem(last=False)
+                await ctx.send(f'Now playing: `{play_config.title}`')
+                vc.play(FFmpegPCMAudio(**play_config.config))
             else:
-                await as_sleep(1)
+                await as_sleep(3)
 
     @commands.command(name='stop', aliases=('s',))
     async def stop(self, ctx):
-        self.voice_client.stop()
+        ctx.voice_client.stop()
 
     @commands.command(name='next', aliases=('n',))
     async def next(self, ctx):
@@ -72,7 +74,8 @@ class MusicPlayer(commands.Cog):
 
     @commands.command(name='queue', aliases=('q',))
     async def queue(self, ctx):
-        await ctx.send(f'Queue:\n{self._playlists[ctx.guild.id]}')
+        titles = '\n'.join([f'`{n+1}. {cfg.title}`' for n, cfg in enumerate(self._playlists[ctx.guild.id].values())])
+        await ctx.send(f'Queue:\n{titles}')
 
     @commands.command(name='jump', aliases=('j',))
     async def jump(self, ctx):

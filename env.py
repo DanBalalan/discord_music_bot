@@ -1,4 +1,4 @@
-BOT_KEY = 'ODg3MDEyOTcwNjMzMjM2NDgw.YT99NA.Wc0-IaBeaFygdNWVbz9RtZzENJw'
+BOT_KEY = 'KEY'
 COMMAND_PREFIX = '-'
 
-FFMPEG_EXECUTABLE = 'C:/bin/ffmpeg/ffmpeg.exe'
+FFMPEG_EXECUTABLE = "ffmpeg"

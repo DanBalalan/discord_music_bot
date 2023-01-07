@@ -12,6 +12,6 @@ class SourceDetector(commands.Converter):
             for source in sources_detector:
                 if source in argument:
                     return sources_detector[source], argument
-            return None, argument
+            ctx.send(f'Can\'t determine web source of "{argument}"')
         else:
             return DEFAULT_SOURCE, argument
