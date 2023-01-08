@@ -1,5 +1,7 @@
 from discord.ext import commands
 
+from settings import ALLOWED_GUILD_IDS
+
 
 class DefaultCog(commands.Cog):
 
@@ -9,7 +11,7 @@ class DefaultCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(f'Logged in as {self.bot.user}')
+        print(f'Cog `{self.__class__.__name__}` ready')
 
     def bot_check(self, ctx):
-        return ctx.guild is not None
+        return ctx.guild.id in ALLOWED_GUILD_IDS
