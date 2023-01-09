@@ -3,7 +3,6 @@ import asyncio
 
 from discord import Intents
 from discord.ext import commands
-from dotenv import load_dotenv
 
 from cogs import all_cogs
 from settings import COMMAND_PREFIX
