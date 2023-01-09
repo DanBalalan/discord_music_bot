@@ -20,6 +20,7 @@ bot = commands.Bot(
     intents=Intents.all()
 )
 
+
 async def main():
     async with bot:
         for cog in all_cogs:
