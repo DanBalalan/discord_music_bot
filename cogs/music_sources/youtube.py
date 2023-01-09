@@ -32,9 +32,9 @@ def get_config(link_or_name):
                 title=info['title'],
                 duration=str(timedelta(seconds=info['duration']))
             ), True
-        except yt.utils.ExtractorError as e:
+        except Exception as e:
             print(e)  # TODO: log
-            return "Error extracting audio", False
+            return "Error extracting audio. Try again", False
 
     else:
         return "Search is not implemented yet", False   # TODO
