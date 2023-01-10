@@ -18,9 +18,14 @@ class YtConfig:
     config: dict
     title: str
     duration: str
+    author_name: str
+
+    @property
+    def track_repr(self):
+        return f'{self.title} ({self.duration}) added by {self.author_name}'
 
 
-def get_config(link_or_name):
+def get_config(link_or_name, author_name):
     if link_or_name.startswith('http'):
         try:
             with yt.YoutubeDL(YDL_OPTIONS) as ydl:
@@ -30,7 +35,8 @@ def get_config(link_or_name):
                 id=link_or_name,
                 config=dict(executable=FFMPEG_EXECUTABLE, source=info['formats'][0]['url'], **FFMPEG_OPTIONS),
                 title=info['title'],
-                duration=str(timedelta(seconds=info['duration']))
+                duration=str(timedelta(seconds=info['duration'])),
+                author_name=author_name
             ), True
         except Exception as e:
             print(e)  # TODO: log

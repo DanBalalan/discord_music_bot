@@ -4,7 +4,7 @@ from collections import OrderedDict
 from importlib import import_module
 
 from discord.ext import commands
-from discord import FFmpegPCMAudio, PCMVolumeTransformer
+from discord import Colour, Embed, FFmpegPCMAudio, PCMVolumeTransformer
 
 from converters import SourceDetector
 from settings import VOLUME
@@ -23,9 +23,7 @@ class MusicPlayer(commands.Cog):
             return None
 
         if ctx.voice_client is None:
-            await ctx.guild.change_voice_state(
-                channel=ctx.author.voice.channel, self_deaf=True
-            )
+            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
             voice_client = await ctx.author.voice.channel.connect(timeout=10)
         else:
             if ctx.voice_client.channel != ctx.author.voice.channel:
@@ -41,23 +39,30 @@ class MusicPlayer(commands.Cog):
 
         if play_config.id not in playlist:
             playlist[play_config.id] = play_config
-            await ctx.send(f"Track `{play_config.title}` added to queue")
+            await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Added to queue',
+                description=play_config.track_repr
+            ))
         else:
-            await ctx.send(f"Track `{play_config.title}` is already in queue")
+            await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Already in queue',
+                description=play_config.track_repr
+            ))
             return
 
         if not voice_client.is_playing():
             _, play_config = playlist.popitem(last=False)
             voice_client.play(PCMVolumeTransformer(FFmpegPCMAudio(**play_config.config), volume=VOLUME), after=lambda err: self._play_next_track(ctx))
-            await ctx.send(f"Now playing: `{play_config.title} ({play_config.duration})`")
-
-    @staticmethod
-    def _get_voice_client_by_guild(bot, guild):
-        for voice_client in bot.voice_clients:
-            if voice_client.guild == guild:
-                return voice_client
-
-        raise RuntimeError(f"Can't find voice client for guild `{guild}`")
+            await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Now playing',
+                description=play_config.track_repr
+            ))
 
     def _play_next_track(self, ctx):
         voice_client = self._get_voice_client_by_guild(self.bot, ctx.guild)
@@ -67,7 +72,23 @@ class MusicPlayer(commands.Cog):
             _, play_config = playlist.popitem(last=False)
 
             voice_client.play(PCMVolumeTransformer(FFmpegPCMAudio(**play_config.config), volume=VOLUME), after=lambda err: self._play_next_track(ctx))
-            asyncio.run_coroutine_threadsafe(ctx.send(f"Now playing: `{play_config.title} ({play_config.duration})`"), self.bot.loop)
+            asyncio.run_coroutine_threadsafe(
+                ctx.send(embed=Embed(
+                    type='rich',
+                    color=Colour.brand_green(),
+                    title='Now playing',
+                    description=play_config.track_repr
+                )),
+                self.bot.loop
+            )
+
+    @staticmethod
+    def _get_voice_client_by_guild(bot, guild):
+        for voice_client in bot.voice_clients:
+            if voice_client.guild == guild:
+                return voice_client
+
+        raise RuntimeError(f"Can't find voice client for guild `{guild}`")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -83,12 +104,22 @@ class MusicPlayer(commands.Cog):
 
         voice_client = await self._get_voice_client(ctx)
         if voice_client is None:
-            await ctx.send(f"You're not in a voice channel")
+            await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Error',
+                description='You\'re not in a voice channel'
+            ))
 
         else:
-            play_config, valid = self._sources[source].get_config(link)
+            play_config, valid = self._sources[source].get_config(link, ctx.author.name)
             if not valid:  # play_config is error message
-                await ctx.send(play_config)
+                await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Error',
+                description=play_config
+            ))
 
             else:
                 await self._play_track(ctx, voice_client, play_config)
@@ -105,19 +136,14 @@ class MusicPlayer(commands.Cog):
 
     @commands.command(name="queue", aliases=("q",))
     async def queue(self, ctx):
-        titles = "\n".join(
-            [
-                f"`{n+1}. {cfg.title} ({cfg.duration})`"
-                for n, cfg in enumerate(self._playlists[ctx.guild.id].values())
-            ]
-        )
+        msg = "\n".join([f"{n+1}. {cfg.track_repr}" for n, cfg in enumerate(self._playlists[ctx.guild.id].values())]) or 'Queue is empty'
 
-        if titles:
-            msg = f"Queue:\n{titles}"
-        else:
-            msg = "Queue is empty"
-
-        await ctx.send(msg)
+        await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Queue',
+                description=msg
+            ))
 
     @commands.command(name="jump", aliases=("j",))
     async def jump(self, ctx):
