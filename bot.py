@@ -1,38 +1,31 @@
-import os
-import discord
-from dotenv import load_dotenv
+import argparse
+import asyncio
 
-from arg_checker import ArgChecker
-from music_sources.restreamer_dispatcher import RestreamerDispatcher
-import settings
+from discord import Intents
+from discord.ext import commands
 
-
-load_dotenv('env.py', override=True)
-client = discord.Client()
-restreamer_dispatcher = RestreamerDispatcher()
+from cogs import all_cogs
+from settings import COMMAND_PREFIX
 
 
-@client.event
-async def on_ready():
-    print(f'We have logged in as {client.user}')
+parser = argparse.ArgumentParser(description='Discord music bot')
+parser.add_argument('-t', '--token', nargs='?', action='store', type=str, required=True, dest='token')
+args = parser.parse_args()
 
 
-@client.event
-async def on_message(message):
-    # if message.author == client.user:
-    #     return
+bot = commands.Bot(
+    command_prefix=commands.when_mentioned_or(COMMAND_PREFIX),
+    description=None,
+    intents=Intents.all()
+)
 
-    splitted = message.content.split(settings.SPLIT_CHAR)
-    if splitted[0] in settings.COMMANDS_MAP:
-        # TODO: прикрутить подключение к войсчату и стриминг через music_sources.restreamers
-        command = splitted[0]
-        actual_args = splitted[1:]
-        actual_args = [None] if not actual_args else actual_args
 
-        func_name, required_arg_types = settings.COMMANDS_MAP[splitted[0]]
-        ArgChecker.check(actual_args, required_arg_types)
-        restreamer_class = restreamer_dispatcher.get_restreamer_class(*actual_args)()
-        getattr(restreamer_class, func_name)()
-        await message.channel.send(f'{command}\n{func_name}')
+async def main():
+    async with bot:
+        for cog in all_cogs:
+            await bot.add_cog(cog(bot))
 
-client.run(os.environ['BOT_KEY'])
+        await bot.start(args.token)
+
+
+asyncio.run(main())
