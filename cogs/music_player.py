@@ -156,8 +156,8 @@ class MusicPlayer(commands.Cog):
         ctx.send("Not implemented yet. Contact bot maintainer for more info")
         print("BasePlayer.jump")
 
-    @commands.command(name="help", aliases=("h",))
-    async def help(self, ctx):
+    @commands.command(name="usage", aliases=("u",))
+    async def usage(self, ctx):
         ctx.send(embed=Embed(
                 type='rich',
                 color=Colour.brand_green(),
@@ -167,6 +167,6 @@ class MusicPlayer(commands.Cog):
                     '-q (-queue)                 show queue',
                     '-n (-next)                  skip current song',
                     '-s (-stop)                  exit voice',
-                    '-h (-help)                  show this message',
+                    '-u (-usage)                 show this message',
                 ])
             ))
