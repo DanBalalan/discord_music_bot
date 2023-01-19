@@ -158,7 +158,7 @@ class MusicPlayer(commands.Cog):
 
     @commands.command(name="usage", aliases=("u",))
     async def usage(self, ctx):
-        ctx.send(embed=Embed(
+        await ctx.send(embed=Embed(
                 type='rich',
                 color=Colour.brand_green(),
                 title='Usage',
