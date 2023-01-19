@@ -167,5 +167,6 @@ class MusicPlayer(commands.Cog):
                     '-q (-queue)                 show queue',
                     '-n (-next)                  skip current song',
                     '-s (-stop)                  exit voice',
+                    '-h (-help)                  show this message',
                 ])
             ))
