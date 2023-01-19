@@ -112,13 +112,13 @@ class MusicPlayer(commands.Cog):
             ))
 
         else:
-            play_config, valid = self._sources[source].get_config(link, ctx.author.name)
-            if not valid:  # play_config is error message
+            play_config, err_msg = self._sources[source].get_config(link, ctx.author.name)
+            if err_msg:
                 await ctx.send(embed=Embed(
                 type='rich',
                 color=Colour.brand_green(),
                 title='Error',
-                description=play_config
+                description=err_msg
             ))
 
             else:
@@ -131,7 +131,13 @@ class MusicPlayer(commands.Cog):
 
     @commands.command(name="next", aliases=("n",))
     async def next(self, ctx):
-        await ctx.send(f"Skipping track")
+        await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Info',
+                description='Skipping track'
+            ))
+        await ctx.voice_client.stop()
         await self._play_next_track(ctx)
 
     @commands.command(name="queue", aliases=("q",))
