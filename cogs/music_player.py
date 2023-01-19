@@ -38,14 +38,13 @@ class MusicPlayer(commands.Cog):
         playlist = self._playlists[ctx.guild.id]
 
         if play_config.id not in playlist:
-            if not playlist:
-                await ctx.send(embed=Embed(
-                    type='rich',
-                    color=Colour.brand_green(),
-                    title='Added to queue',
-                    description=play_config.track_repr
-                ))
             playlist[play_config.id] = play_config
+            await ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Added to queue',
+                description=play_config.track_repr
+            ))
         else:
             await ctx.send(embed=Embed(
                 type='rich',
