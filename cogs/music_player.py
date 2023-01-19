@@ -155,3 +155,18 @@ class MusicPlayer(commands.Cog):
     async def jump(self, ctx):
         ctx.send("Not implemented yet. Contact bot maintainer for more info")
         print("BasePlayer.jump")
+
+    @commands.command(name="help", aliases=("h",))
+    async def help(self, ctx):
+        ctx.send(embed=Embed(
+                type='rich',
+                color=Colour.brand_green(),
+                title='Usage',
+                description='\n'.join([
+                    '-p (-play) <youtube link>   play song',
+                    '-q (-queue)                 show queue',
+                    '-n (-next)                  skip current song',
+                    '-s (-stop)                  exit voice',
+                    '-h (-help)                  show this message',
+                ])
+            ))
